@@ -1,8 +1,8 @@
-const express = require("express");
+var express = require("express");
 
-const app = express();
+var app = express();
 
-app.get("/", (req, res) => {
+app.get("/", function (req, res) {
   res.send("welcome to express app!!");
 });
 
@@ -10,6 +10,6 @@ app.get("/info", (req, res) => {
   res.send("hey this is /info api");
 });
 
-app.listen(3000, () => {
+app.listen(80, function () {
   console.log("listening");
 });
