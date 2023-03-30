@@ -16,8 +16,14 @@ phases:
       - echo Build completed on 'date'
       - echo Pushing the Docker image...
       - docker push 940734073892.dkr.ecr.ap-southeast-1.amazonaws.com/007-test:latest
+      - apt-get install jq -y
+      - ContainerName="todo"
+      - ImageURI=$(cat imageDetail.json | jq -r '.ImageURI')
       - echo Writing image definitions file...
-      - printf '[{"imageUri":"%s"}]' 940734073892.dkr.ecr.ap-southeast-1.amazonaws.com/007-test:latest > imagedefinitions.json
+      - printf '[{"name":"container_name", "imageUri":"%s"}]' 940734073892.dkr.ecr.ap-southeast-1.amazonaws.com/007-test:latest > imagedefinitions.json
+      - sed -i -e "s|CONTAINER_NAME|$ContainerName|g" imagedefinitions.json
+      - sed -i -e "s|IMAGE_URI|$ImageURI|g" imagedefinitions.json
+      - cat imagedefinition.json
 artifacts:
   files:
     - imagedefinitions.json
