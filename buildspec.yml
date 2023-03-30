@@ -13,6 +13,12 @@ phases:
       - docker tag 007-test:latest 940734073892.dkr.ecr.ap-southeast-1.amazonaws.com/007-test:latest
   post_build:
     commands:
-      - echo Build completed on 'date'
-      - echo Pushing the Docker image...
-      - docker push 940734073892.dkr.ecr.ap-southeast-1.amazonaws.com/007-test:latest
+      -echo Build completed on 'date'
+      -echo Pushing the Docker image...
+      -docker push 940734073892.dkr.ecr.ap-southeast-1.amazonaws.com/007-test:latest
+      -docker push 940734073892.dkr.ecr.ap-southeast-1.amazonaws.com/007-test:007-test
+      -echo Writing image definition file...
+      -printf '[{"name": "nodeapp", "imageUri":"%s"}]' 940734073892.dkr.ecr.ap-southeast-1.amazonaws.com/007-test:latest > imagedefinitions.json
+      -cat imagedefinition.json
+  artifacts:
+    files: imagedefinitions.json
