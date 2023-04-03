@@ -7,16 +7,16 @@ Parameters:
     Default: dev
   GithubUserName:
     Type: String
-    Default: <USERNAME>
+    Default: aqilahmsrh
   GithubRepo:
     Type: String
-    Default: Fargate-ECSCluster-Cloudformation
+    Default: test-777
   GithubBranch:
     Type: String
-    Default: <BRANCH>
+    Default: main
   GithubOAuthToken:
     Type: String
-    Default: <GITHUB ACCESS TOKEN>
+    Default: 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
   ContainerPort:
     Type: Number
     Default: 8080
