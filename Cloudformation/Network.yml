@@ -109,7 +109,7 @@ Resources:
   VPCInternetGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties: 
-      InternetGatewayId: !Ref InternetGateway
+      InternetGatewayId: !Ref IGW007
       VpcId: !Ref VPC007
 
   # Create Access Role for ECS-Tasks
