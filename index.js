@@ -10,6 +10,6 @@ app.get("/info", (req, res) => {
   res.send("hey this is /info api");
 });
 
-app.listen(80, function () {
+app.listen(8080, function () {
   console.log("listening");
 });
