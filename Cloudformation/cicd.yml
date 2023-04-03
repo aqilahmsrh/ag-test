@@ -119,7 +119,7 @@ Resources:
               Category: Source
               Owner: ThirdParty
               Provider: GitHub
-              Version: 1
+              Version: 2
             Configuration:
               Repo: !Ref GithubRepo
               Branch: !Ref GithubBranch
