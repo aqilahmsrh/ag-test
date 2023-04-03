@@ -110,7 +110,7 @@ Resources:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties: 
       InternetGatewayId: !Ref InternetGateway
-      VpcId: !Ref VPC
+      VpcId: !Ref VPC007
 
   # Create Access Role for ECS-Tasks
   ExecutionRole007:
@@ -149,7 +149,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: !Join ['-', [!Ref Stage, !Ref 'AWS::AccountId', 'LoadBalancer007SecurityGroup']]
-      VpcId: !Ref VPC
+      VpcId: !Ref VPC007
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 80
@@ -161,7 +161,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: !Join ['-', [!Ref Stage, !Ref 'AWS::AccountId', 'Container007SecurityGroup']]
-      VpcId: !Ref VPC
+      VpcId: !Ref VPC007
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: !Ref ContainerPort
@@ -197,9 +197,9 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       DefaultActions: 
-        - TargetGroupArn: !Ref TargetGroup
+        - TargetGroupArn: !Ref TargetGroup007
           Type: forward
-      LoadBalancerArn: !Ref LoadBalancer
+      LoadBalancerArn: !Ref LoadBalancer007
       Port: 80
       Protocol: HTTP
 
