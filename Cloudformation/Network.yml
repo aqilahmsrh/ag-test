@@ -173,7 +173,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties: 
       IpAddressType: ipv4
-      Name: !Join ['-', [!Ref Stage, !Ref 'AWS::AccountId', 'LoadBalancer']]
+      Name: !Join ['-', [!Ref Stage, !Ref 'AWS::AccountId', 'LoadBalancer007']]
       Scheme: internet-facing
       SecurityGroups:
         - !Ref LoadBalancer007SecurityGroup
@@ -186,7 +186,7 @@ Resources:
   TargetGroup007:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: !Join ['-', [!Ref Stage, !Ref 'AWS::AccountId', 'TargetGroup']]
+      Name: !Join ['-', [!Ref Stage, !Ref 'AWS::AccountId', 'TargetGroup007']]
       Port: 80
       Protocol: HTTP
       TargetType: ip
