@@ -1,0 +1,227 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: The CloudFormation template for the Fargate ECS Cluster.
+
+Parameters:
+  Stage:
+    Type: String
+  ContainerPort:
+    Type: Number
+  ImageURI:
+    Type: String
+
+Resources:
+
+  # Create an ECS Cluster
+  Cluster007:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Join ['-', [!Ref Stage, !Ref 'AWS::AccountId', 'Cluster007']]
+
+  # Create a VPC
+  VPC007:
+    Type: AWS::EC2::VPC
+    Properties: 
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: True
+      EnableDnsSupport: True
+      InstanceTenancy: default
+      Tags:
+        - Key: Name
+          Value: VPC007
+
+  # Create a Subnet
+  Subnet007A:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.1.0/24
+      VpcId: !Ref VPC007
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      Tags:
+        - Key: Name
+          Value: Subnet007A
+
+  Subnet007B:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.2.0/24
+      VpcId: !Ref VPC007
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      Tags:
+        - Key: Name
+          Value: Subnet007B
+
+  # Create a route table to allow access to internet
+  PublicRouteTable007A:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC007
+      Tags:
+        - Key: Name
+          Value: PublicRouteTable007A
+
+  PublicRouteTable007B:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC007
+      Tags:
+        - Key: Name
+          Value: PublicRouteTable007B
+
+  # Create a Route to allow access to internet using an internet gateway
+  PublicRoute007A:
+    Type: AWS::EC2::Route
+    DependsOn: VPCInternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable007A
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref IGW007
+  
+  PublicRoute007B:
+    Type: AWS::EC2::Route
+    DependsOn: VPCInternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable007B
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref IGW007
+
+  # Attach Public Route to SubnetA
+  PublicRouteAssociation007A:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref PublicRouteTable007A
+      SubnetId: !Ref Subnet007A
+
+  PublicRouteAssociation007B:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref PublicRouteTable007B
+      SubnetId: !Ref Subnet007B
+
+  # Create an Internet Gateway
+  IGW007:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: IGW007
+
+  # Attach the internet gateway to the VPC
+  VPCInternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties: 
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+
+  # Create Access Role for ECS-Tasks
+  ExecutionRole007:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ['-', [!Ref Stage, !Ref 'AWS::AccountId', 'ExecutionRole007']]
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'
+
+  # Create a TaskDefinition with container details
+  TaskDefinition007:
+    Type: AWS::ECS::TaskDefinition
+    Properties: 
+      Memory: 1024
+      Cpu: 512
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - 'FARGATE'
+      TaskRoleArn: !Ref ExecutionRole007
+      ExecutionRoleArn: !Ref ExecutionRole007
+      ContainerDefinitions:
+        - Name: !Join ['-', [!Ref Stage, !Ref 'AWS::AccountId', 'Container']]
+          Image: !Ref ImageURI
+          PortMappings:
+            - ContainerPort: !Ref ContainerPort
+              HostPort: !Ref ContainerPort
+
+  # Create a security group for load balancer and open port 80 in bound from internet
+  LoadBalancer007SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['-', [!Ref Stage, !Ref 'AWS::AccountId', 'LoadBalancer007SecurityGroup']]
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+  # Create a security group for Container and open in bound Container port from Load balancer security group to the Container 
+  Container007SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['-', [!Ref Stage, !Ref 'AWS::AccountId', 'Container007SecurityGroup']]
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !Ref ContainerPort
+          ToPort: !Ref ContainerPort
+          SourceSecurityGroupId: !Ref LoadBalancer007SecurityGroup
+
+  # Create a LoadBalancer and attach the Security group and Subnets
+  LoadBalancer007:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties: 
+      IpAddressType: ipv4
+      Name: !Join ['-', [!Ref Stage, !Ref 'AWS::AccountId', 'LoadBalancer']]
+      Scheme: internet-facing
+      SecurityGroups:
+        - !Ref LoadBalancer007SecurityGroup
+      Subnets: 
+        - !Ref Subnet007A
+        - !Ref Subnet007B
+      Type: application
+
+  # Create a TargetGroup for HTTP port 80
+  TargetGroup007:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Join ['-', [!Ref Stage, !Ref 'AWS::AccountId', 'TargetGroup']]
+      Port: 80
+      Protocol: HTTP
+      TargetType: ip
+      VpcId: !Ref VPC007
+
+  # Create a LoadBalancerListener and attach the TargetGroup and LoadBalancer
+  LoadBalancerListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions: 
+        - TargetGroupArn: !Ref TargetGroup
+          Type: forward
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: HTTP
+
+  # Create an ECS Service and add created Cluster, TaskDefintion, Subnets, TargetGroup and SecurityGroup
+  ECS007Service:
+    Type: AWS::ECS::Service
+    DependsOn: LoadBalancerListener
+    Properties:
+      ServiceName: !Join ['-', [!Ref Stage, !Ref 'AWS::AccountId', 'ECS007Service']]
+      Cluster: !Ref Cluster007
+      TaskDefinition: !Ref TaskDefinition007
+      DesiredCount: 2
+      LaunchType: FARGATE
+      NetworkConfiguration: 
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref Subnet007A
+            - !Ref Subnet007B
+          SecurityGroups:
+            - !Ref Container007SecurityGroup
+      LoadBalancers:
+        - ContainerName: !Join ['-', [!Ref Stage, !Ref 'AWS::AccountId', 'Container']]
+          ContainerPort: !Ref ContainerPort
+          TargetGroupArn: !Ref TargetGroup007
