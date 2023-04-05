@@ -7,13 +7,13 @@ Parameters:
     Default: dev
   GithubUserName:
     Type: String
-    Default: aqilahmsrh
+    Default: 
   GithubRepo:
     Type: String
-    Default: test-777
+    Default: 
   GithubBranch:
     Type: String
-    Default: main
+    Default: 
   GithubOAuthToken:
     Type: String
     Default: 
