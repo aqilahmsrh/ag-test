@@ -30,25 +30,27 @@ Resources:
           Value: VPC007
 
   # Create a Subnet
-  Subnet007A:
+  PublicSubnet007A:
     Type: AWS::EC2::Subnet
     Properties:
       CidrBlock: 10.0.1.0/24
       VpcId: !Ref VPC007
       AvailabilityZone: !Select [0, !GetAZs ""]
+      MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: Subnet007A
+          Value: PublicSubnet007A
 
-  Subnet007B:
+  PublicSubnet007B:
     Type: AWS::EC2::Subnet
     Properties:
       CidrBlock: 10.0.2.0/24
       VpcId: !Ref VPC007
       AvailabilityZone: !Select [1, !GetAZs ""]
+      MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: Subnet007B
+          Value: PublicSubnet007B
 
   # Create a route table to allow access to internet
   PublicRouteTable007A:
@@ -59,28 +61,12 @@ Resources:
         - Key: Name
           Value: PublicRouteTable007A
 
-  PublicRouteTable007B:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref VPC007
-      Tags:
-        - Key: Name
-          Value: PublicRouteTable007B
-
   # Create a Route to allow access to internet using an internet gateway
   PublicRoute007A:
     Type: AWS::EC2::Route
     DependsOn: VPCInternetGatewayAttachment
     Properties:
       RouteTableId: !Ref PublicRouteTable007A
-      DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref IGW007
-  
-  PublicRoute007B:
-    Type: AWS::EC2::Route
-    DependsOn: VPCInternetGatewayAttachment
-    Properties:
-      RouteTableId: !Ref PublicRouteTable007B
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref IGW007
 
@@ -94,7 +80,7 @@ Resources:
   PublicRouteAssociation007B:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties: 
-      RouteTableId: !Ref PublicRouteTable007B
+      RouteTableId: !Ref PublicRouteTable007A
       SubnetId: !Ref Subnet007B
 
   # Create an Internet Gateway
