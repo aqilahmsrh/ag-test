@@ -7,16 +7,13 @@ Parameters:
     Default: dev
   GithubUserName:
     Type: String
-    Default: 
+    Default: aqilahmsrh
   GithubRepo:
     Type: String
-    Default: 
+    Default: test-777
   GithubBranch:
     Type: String
-    Default: 
-  GithubOAuthToken:
-    Type: String
-    Default: 
+    Default: main
   ContainerPort:
     Type: Number
     Default: 8080
@@ -47,6 +44,7 @@ Resources:
             Action: 'sts:AssumeRole'
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/AdministratorAccess'
+        - 'arn:aws:iam::aws:policy/AWSCodeStarFullAccess'
 
   # Create Access Role for CodeBuild
   CodeBuildExecutionRole007:
@@ -60,6 +58,7 @@ Resources:
           Action: sts:AssumeRole
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/AdministratorAccess'
+        - 'arn:aws:iam::aws:policy/AWSCodeStarFullAccess'
 
   # Create Access Role for Cloudformation
   CloudformationExecutionRole007:
@@ -73,6 +72,7 @@ Resources:
             Action: 'sts:AssumeRole'
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/AdministratorAccess'
+        - 'arn:aws:iam::aws:policy/AWSCodeStarFullAccess'
 
   # Create the BuildProject with required Build information
   Build007:
@@ -95,6 +95,12 @@ Resources:
         Type: CODEPIPELINE
         # This file (buildspec.yml In Source code) contains commands to Create and Push a docker image to the ECR_REPOSITORY_URI
         BuildSpec: buildspec.yml
+  
+  CodeStarConnection:
+    Type: 'AWS::CodeStarConnections::Connection'
+    Properties:
+      ConnectionName: Test-007
+      ProviderType: GitHub
 
   # Create CodePipeline with 3 stages (Source, Build and Deploy)
   CodePipeLine:
@@ -111,20 +117,19 @@ Resources:
         
       Stages:
 
-        # Download source code from Github Repo to source-output-artifacts path in S3 Bucket
+        # Download source code from Github Repo to source-output-artifacts path in  Bucket
         - Name: Source
           Actions: 
           - Name: Source
             ActionTypeId: 
               Category: Source
-              Owner: ThirdParty
-              Provider: GitHub
-              Version: 2
+              Provider: CodeStarSourceConnection
+              Owner: AWS
+              Version: 1
             Configuration:
-              Repo: !Ref GithubRepo
-              Branch: !Ref GithubBranch
-              Owner: !Ref GithubUserName
-              OAuthToken: !Ref GithubOAuthToken
+              ConnectionArn: !Ref CodeStarConnection
+              FullRepositoryId: !Sub ${GithubUserName}/${GithubRepo}
+              BranchName: !Ref GithubBranch
             RunOrder: 1
             OutputArtifacts:
               - Name: source-output-artifacts
@@ -146,7 +151,7 @@ Resources:
                 ProjectName: !Ref Build007
             RunOrder: 1
 
-        # Deploy the project by executing Fargate-Cluster.yml file in the Source code with Cloudformation.
+        # Deploy the project by executing Network.yml file in the Source code with Cloudformation.
         - Name: Deploy
           Actions:
           - Name: Deploy
@@ -161,7 +166,7 @@ Resources:
             Configuration:
                 ActionMode: CREATE_UPDATE
                 Capabilities: CAPABILITY_NAMED_IAM
-                # Pass parameter values to Fargate-Cluster.yml for deployment
+                # Pass parameter values to Network.yml for deployment
                 ParameterOverrides: !Sub |
                   {
                     "ImageURI" : { "Fn::GetParam" : ["build-output-artifacts", "imageDetail.json", "ImageURI"] },
