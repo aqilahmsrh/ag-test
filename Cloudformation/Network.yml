@@ -135,29 +135,6 @@ Resources:
         - Key: Name
           Value: PrivateAppSubnetB
           
-  # SG for ALB (Port 80)
-  SecurityGroup007:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Enable Ports 80, 443, 22
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: 0.0.0.0/0
-      VpcId: !Ref VPC007
-      Tags:
-        - Key: Name
-          Value: SecurityGroup007
-
     # Allocate Elastic IP Address
   NatGatewayAEIP:
     Type: AWS::EC2::EIP
