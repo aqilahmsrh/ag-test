@@ -111,6 +111,133 @@ Resources:
     Properties: 
       InternetGatewayId: !Ref IGW007
       VpcId: !Ref VPC007
+      
+  # Private App Subnets
+  PrivateAppSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      CidrBlock: 10.0.2.0/24
+      MapPublicIpOnLaunch: false
+      VpcId: !Ref VPC007
+      Tags:
+        - Key: Name
+          Value: PrivateAppSubnetA
+
+  PrivateAppSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      CidrBlock: 10.0.3.0/24
+      MapPublicIpOnLaunch: false
+      VpcId: !Ref VPC007
+      Tags:
+        - Key: Name
+          Value: PrivateAppSubnetB
+          
+  # SG for ALB (Port 80)
+  SecurityGroup007:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable Ports 80, 443, 22
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      VpcId: !Ref VPC007
+      Tags:
+        - Key: Name
+          Value: SecurityGroup007
+
+    # Allocate Elastic IP Address
+  NatGatewayAEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: VPC
+      Tags:
+        - Key: Name
+          Value: NatGatewayAEIP
+
+  NatGatewayBEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: VPC
+      Tags:
+        - Key: Name
+          Value: NatGatewayBEIP
+
+  # Create NAT gateway in public subnet
+  NatGatewayA:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGatewayAEIP.AllocationId
+      SubnetId: !Ref Subnet007A
+      Tags:
+        - Key: Name
+          Value: NatGatewayA
+
+  NatGatewayB:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGatewayBEIP.AllocationId
+      SubnetId: !Ref Subnet007B
+      Tags:
+        - Key: Name
+          Value: NatGatewayB
+
+  # Create Private Route Table
+  PrivateRouteTableA:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC007
+      Tags:
+        - Key: Name
+          Value: PrivateRouteTableA
+
+  PrivateRouteTableB:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC007
+      Tags:
+        - Key: Name
+          Value: PrivateRouteTableB
+
+  # Add a route to point Internet-bound traffic to NAT gateway 1
+  PrivateRouteA:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGatewayA
+      RouteTableId: !Ref PrivateRouteTableA
+
+  PrivateRouteB:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGatewayB
+      RouteTableId: !Ref PrivateRouteTableB
+
+  # Associate Private Subnet with Private Route Table
+  PrivateAppSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableA
+      SubnetId: !Ref PrivateAppSubnetA
+
+  PrivateAppSubnetBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableB
+      SubnetId: !Ref PrivateAppSubnetB
 
   # Create Access Role for ECS-Tasks
   ExecutionRole007:
