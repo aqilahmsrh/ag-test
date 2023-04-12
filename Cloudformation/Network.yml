@@ -26,14 +26,7 @@ AWSTemplateFormatVersion: 2010-09-09
       Description: Public Subnet IP Range
       Type: String
       Default: 10.0.3.0/24
-    AvailabilityZoneA:
-      Description: Avaibalbility Zone 1
-      Type: String
-      Default: eu-west-3a
-    AvailabilityZoneB:
-      Description: Avaibalbility Zone 2
-      Type: String
-      Default: eu-west-3b     
+      
   Resources:
     DemoVPC:
       Type: AWS::EC2::VPC
@@ -50,7 +43,7 @@ AWSTemplateFormatVersion: 2010-09-09
       Type: AWS::EC2::Subnet
       Properties:
         VpcId: !Ref DemoVPC
-        AvailabilityZone: !Ref AvailabilityZoneA
+        AvailabilityZone: !Select [0, !GetAZs ""]
         CidrBlock: !Ref PrivateSubnetACidr 
         Tags:
           -
@@ -61,7 +54,7 @@ AWSTemplateFormatVersion: 2010-09-09
       Type: AWS::EC2::Subnet
       Properties:
         VpcId: !Ref DemoVPC
-        AvailabilityZone: !Ref AvailabilityZoneB
+        AvailabilityZone: !Select [1, !GetAZs ""]
         CidrBlock: !Ref PrivateSubnetBCidr
         Tags:
           -
@@ -72,7 +65,7 @@ AWSTemplateFormatVersion: 2010-09-09
       Type: AWS::EC2::Subnet
       Properties:
         VpcId: !Ref DemoVPC
-        AvailabilityZone: !Ref AvailabilityZoneA
+        AvailabilityZone: !Select [0, !GetAZs ""]
         CidrBlock: !Ref PublicSubnetACidr 
         Tags:
           -
@@ -83,7 +76,7 @@ AWSTemplateFormatVersion: 2010-09-09
       Type: AWS::EC2::Subnet
       Properties:
         VpcId: !Ref DemoVPC
-        AvailabilityZone: !Ref AvailabilityZoneB
+        AvailabilityZone: !Select [1, !GetAZs ""]
         CidrBlock: !Ref PublicSubnetBCidr
         Tags:
           -
@@ -354,7 +347,7 @@ AWSTemplateFormatVersion: 2010-09-09
           - FARGATE
         ContainerDefinitions:
           - Name: "ecs-front-container"
-            Image: "url of your image in the ecr"
+            Image: !Ref ImageURI
             PortMappings:
               - ContainerPort: 5000
             Environment:
@@ -374,7 +367,7 @@ AWSTemplateFormatVersion: 2010-09-09
           - FARGATE
         ContainerDefinitions:
           - Name: "ecs-backend-container"
-            Image: "url of your image in the ecr"
+            Image: !Ref ImageURI
             PortMappings:
               - ContainerPort: 3000
 
