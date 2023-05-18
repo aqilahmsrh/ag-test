@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/regovtech/devops-git-actions-demo.git"
+    "url": "git+https://github.com/aqilahmsrh/ag-test.git"
   },
   "keywords": [
     "GitAction"
@@ -20,9 +20,9 @@
   "author": "PaulA",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/regovtech/devops-git-actions-demo/issues"
+    "url": "https://github.com/aqilahmsrh/ag-test/issues"
   },
-  "homepage": "https://github.com/regovtech/devops-git-actions-demo#readme",
+  "homepage": "https://github.com/aqilahmsrh/ag-test#readme",
   "devDependencies": {
     "jest": "^27.0.6",
     "jest-junit": "^12.2.0",
