@@ -1,0 +1,172 @@
+name: Node.js CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  Build:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: echo "Building and testing on development server on branch $GITHUB_REF"
+      - name: Check commit status
+        id: check1
+        uses: ouzi-dev/commit-status-updater@v1.1.0
+        with:
+          status: "pending"
+          addHoldComment: "true"
+          pendingComment: "action pending!"
+          successComment: "action success!"
+          failComment: "action failed!"
+      - if: always()
+        uses: ouzi-dev/commit-status-updater@v1.1.0
+        with:
+          status: "${{ job.status }}"
+
+      - name: AWS Test Configuration
+        if: ${{ success() }}
+        id: check2
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-southeast-1
+        
+      - name: AWS CodeBuild
+        if: ${{ success() }}
+        uses: aws-actions/aws-codebuild-run-build@v1.0.3
+        with:
+          project-name: gitactions
+
+      - name: Copy Build to S3
+        if: ${{ success() }}
+        run: |
+          yarn install
+          yarn run build:ci
+          aws s3 cp build s3://regov-artifacts-dev/artifacts/build --recursive
+        # ${{ secrets.AWS_S3_Artifacts }}
+
+      - name: Publish Artifacts
+        if: ${{ success() }}
+        id: check3
+        uses: actions/upload-artifact@v2
+        with:
+          name: latest-build
+          path: build
+          #path: ${{ secrets.AWS_S3_Artifacts }}
+
+    
+  Tests:
+    needs: [Build]
+    name: Publish Unit Test Results
+    runs-on: ubuntu-latest
+    # the build-and-test job might be skipped, we don't need to run this job then
+    if: success() || failure()
+
+    steps:
+      - uses: actions/checkout@v2
+      - run: echo "Building and testing on development server on branch $GITHUB_REF"
+      - name: Check commit status
+        id: check1
+        uses: ouzi-dev/commit-status-updater@v1.1.0
+        with:
+          status: "pending"
+          addHoldComment: "true"
+          pendingComment: "action pending!"
+          successComment: "action success!"
+          failComment: "action failed!"
+
+      - if: always()
+        uses: ouzi-dev/commit-status-updater@v1.1.0
+        with:
+          status: "${{ job.status }}"
+
+      - name: AWS Build Configuration
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-southeast-1
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: latest-build
+          path: build
+
+      - name: Run Jest
+        if: ${{ success() }}
+        run: |
+          yarn install
+          yarn test
+
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        with:
+          files: reports/jest-reports.xml
+
+
+  Deployment:
+    needs: [Tests]
+    name: Deploy CloudFormation
+    runs-on: ubuntu-latest
+    outputs:
+      env-name: ${{ steps.env-name.outputs.environment }}
+    steps:
+      - uses: actions/checkout@v2
+      - run: echo "Deploy on branch $GITHUB_REF"
+      - name: Check commit status
+        id: check1
+        uses: ouzi-dev/commit-status-updater@v1.1.0
+        with:
+          status: "pending"
+          addHoldComment: "true"
+          pendingComment: "action pending!"
+          successComment: "action success!"
+          failComment: "action failed!"
+
+      - if: always()
+        uses: ouzi-dev/commit-status-updater@v1.1.0
+        with:
+          status: "${{ job.status }}"
+
+      - name: AWS Build Configuration
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-southeast-1
+
+      - name: Configure environment name
+        if: success()
+        id: env-name
+        env:
+          REPO: ${{ github.repository }}
+        run: |
+          ENVIRONMENT=`echo $REPO | tr "/" "-"`
+          echo "Environment name: $ENVIRONMENT"
+          echo "::set-output name=environment::$ENVIRONMENT"
+      
+      # - name: Deploy AWS CloudFormation Stack
+      #   if: success()
+      #   env:
+      #     CAPABILITY_AUTO: ${{ --capabilities CAPABILITY_AUTO_EXPAND }}
+      #   uses: aws-actions/aws-cloudformation-github-deploy@v1
+        
+      - name: CloudFormation-Create ChangeSet
+        if: success()
+        run: |
+          aws cloudformation create-change-set --stack-name cfcd-actions-workflow --change-set-name cfcd-actions-workflow-changeset --template-body file://function-update.yaml --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_IAM 
+        # with:
+        #   name: ${{ steps.env-name.outputs.environment }}
+        #   template: ./function-update.yaml "$CAPABILITY_AUTO"
+    
+      - name: CloudFormation-Deploy
+        if: success()
+        run: |
+          aws cloudformation update-stack --stack-name cfcd-actions-workflow --template-body file://function-update.yaml --capabilities CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM CAPABILITY_IAM
+
