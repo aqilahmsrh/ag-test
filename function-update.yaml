@@ -90,7 +90,7 @@ Resources:
         Statement:
           - Effect: Allow
             Action: "s3:*"
-            Resource: "arn:aws:s3:::regov-artifacts-dev/*"
+            Resource: "arn:aws:s3:::bucket-test-777/*"
 
   lambdaLogGroup:
     Type: "AWS::Logs::LogGroup"
@@ -107,7 +107,7 @@ Resources:
       FunctionName: !Ref "FunctionName"
       Handler: index.handler
       #CodeUri: ./build     #GitActions Codepipeline      #Observation: Doesn't deploy in gitactions script. Do uncomment below for trial
-      CodeUri: s3://regov-artifacts-dev/e5b0309f-1ceb-4a28-988e-20719284252a/artifact-2021-09-03-07:56:47     #CLI Cloudformation Creation
+      CodeUri: s3://bucket-test-777/20230518-041041.zip     #CLI Cloudformation Creation
       Role: !GetAtt "lambdaIAMRole.Arn"
 
 Outputs:
