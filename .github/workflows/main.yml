@@ -41,14 +41,20 @@ jobs:
           TAG=$(date +%Y%m%d)-$(date +%H%M%S)
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "Tag Version: $TAG" >> $GITHUB_STEP_SUMMARY
-      - name: 'Create Zip File'
-        id: 'create_package'
-        run: |
-          PACKAGE_NAME="${{ steps.generate_tag_version.outputs.tag }}.zip"
-          echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
-          zip -r $PACKAGE_NAME .
-      - name: 'Upload to S3 Bucket'
-        run: aws s3 cp ${{ steps.create_package.outputs.package_name }} s3://${{ secrets.AWS_S3_BUCKET_NAME }}
+      - name: 'Create Artifacts'
+        id: 'create_artifacts'
+        uses: actions/upload-artifact@v2
+        with:
+          name: 'package'
+          path: ${{ steps.generate_tag_version.outputs.tag }}.zip
+#       - name: 'Create Zip File'
+#         id: 'create_package'
+#         run: |
+#           PACKAGE_NAME="${{ steps.generate_tag_version.outputs.tag }}.zip"
+#           echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+#           zip -r $PACKAGE_NAME .
+#       - name: 'Upload to S3 Bucket'
+#         run: aws s3 cp ${{ steps.create_package.outputs.package_name }} s3://${{ secrets.AWS_S3_BUCKET_NAME }}
 #       - uses: actions/github-script@v6
 #         name: 'Create Git Tag'
 #         with:
