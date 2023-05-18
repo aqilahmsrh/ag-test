@@ -54,8 +54,8 @@ jobs:
           name: 'package'
           path: ${{ github.workspace }}/${{ steps.create_package.outputs.package_name }}
 
-#       - name: 'Upload to S3 Bucket'
-#         run: aws s3 cp ${{ steps.create_package.outputs.package_name }} s3://${{ secrets.AWS_S3_BUCKET_NAME }}
+      - name: 'Upload to S3 Bucket'
+        run: aws s3 cp ${{ steps.create_package.outputs.package_name }} s3://${{ secrets.AWS_S3_BUCKET_NAME }}
 #       - uses: actions/github-script@v6
 #         name: 'Create Git Tag'
 #         with:
