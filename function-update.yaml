@@ -5,7 +5,7 @@ Parameters:
   ENV:
     NoEcho: true 
     Type: "String" 
-    Default: "DEV"
+    Default: "main"
     Description: "Environment"
   Region:
     NoEcho: true 
