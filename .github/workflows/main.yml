@@ -13,19 +13,19 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: echo "Building and testing on development server on branch $GITHUB_REF"
-      - name: Check commit status
-        id: check1
-        uses: ouzi-dev/commit-status-updater@v1.1.0
-        with:
-          status: "pending"
-          addHoldComment: "true"
-          pendingComment: "action pending!"
-          successComment: "action success!"
-          failComment: "action failed!"
-      - if: always()
-        uses: ouzi-dev/commit-status-updater@v1.1.0
-        with:
-          status: "${{ job.status }}"
+#       - name: Check commit status
+#         id: check1
+#         uses: ouzi-dev/commit-status-updater@v1.1.0
+#         with:
+#           status: "pending"
+#           addHoldComment: "true"
+#           pendingComment: "action pending!"
+#           successComment: "action success!"
+#           failComment: "action failed!"
+#       - if: always()
+#         uses: ouzi-dev/commit-status-updater@v1.1.0
+#         with:
+#           status: "${{ job.status }}"
 
       - name: AWS Test Configuration
         if: ${{ success() }}
