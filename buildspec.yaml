@@ -1,0 +1,30 @@
+version: 0.2
+phases: 
+  install:
+    runtime-versions:
+      nodejs: 12
+  pre_build:
+    commands:
+      - echo "Entered the pre_build phase..."
+      - echo "Install package.json" 
+      - yarn install
+      - yarn run mkdir:build
+      - yarn run zip:build
+      - yarn test
+  build:
+    commands:
+      - echo $CODEBUILD_SRC_DIR
+      - yarn build:ci
+reports:
+  jest_reports:
+    files:
+      - '**/*'
+    file-format: JUNITXML
+    base-directory: '**/__tests__/'   #src/tests/__tests__
+    discard-paths: yes
+artifacts:
+  files:
+    - build/**/*
+    - outputTemplate.yaml
+  name: artifact-$(date +%Y-%m-%d-%H:%M:%S)
+
